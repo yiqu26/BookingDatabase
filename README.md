@@ -1,255 +1,378 @@
-# 🏨 飯店訂房網站關聯式資料庫設計
+# 🏨 飯店訂房系統資料庫設計
 
-## 📊 資料庫設計概述
+## 📊 系統概述
 
-本系統設計了一個完整、可擴展的飯店訂房網站關聯式資料庫，包含**20個主要實體表格**，涵蓋從飯店管理到客戶訂房的所有必要功能。此設計遵循**第三範式(3NF)**，確保資料一致性與完整性，同時盡量減少資料冗餘。
+本系統為完整的飯店訂房管理資料庫，採用SQL Server設計，包含**20個主要資料表**，涵蓋從飯店資訊、房型管理到客戶訂房的所有核心功能。此設計遵循**第三範式(3NF)**，確保資料一致性與完整性，同時減少資料冗餘。
 
-## 🌟 系統設計理念與目標
+## 📋 資料表總覽
 
-此設計不僅僅是一個前端訂房介面的後端支持，而是一個**端到端的整合系統**，致力於：
+### 🏢 飯店與房間管理
 
-1. **完整業務流程支持**：從用戶瀏覽到完成訂房、入住和退房的全過程
-2. **飯店多維度管理**：支持多家飯店、多種房型與價格策略管理
-3. **客戶體驗優化**：通過準確的房間可用性管理和個人化服務提升客戶體驗
-4. **營運效率提升**：整合前後台系統，實現資訊即時流通，減少人工操作錯誤
-5. **資料分析支持**：提供豐富的資料結構支持業務分析和決策
+| 資料表名稱 | 主要功能 | 重要欄位 |
+|------------|----------|----------|
+| Hotel | 儲存飯店基本資訊 | HotelID, Name, Address, City, StarRating |
+| HotelAmenity | 記錄各種飯店設施選項 | AmenityID, Name, Description |
+| HotelHasAmenity | 建立飯店與設施的多對多關聯 | HotelID, AmenityID |
+| HotelImage | 存放飯店相關圖片 | ImageID, HotelID, ImageURL, IsPrimary |
+| RoomType | 定義飯店提供的房型 | RoomTypeID, HotelID, Name, BasePrice |
+| RoomAmenity | 記錄各種房間設施選項 | AmenityID, Name, Description |
+| RoomTypeHasAmenity | 建立房型與設施的多對多關聯 | RoomTypeID, AmenityID |
+| RoomTypeImage | 存放房型相關圖片 | ImageID, RoomTypeID, ImageURL |
+| Room | 記錄實體房間資訊 | RoomID, HotelID, RoomTypeID, RoomNumber, Status |
 
-## 📋 主要資料表分類
+### 💰 價格與促銷管理
 
-### 🏢 飯店與房間管理相關表格
+| 資料表名稱 | 主要功能 | 重要欄位 |
+|------------|----------|----------|
+| PricePlan | 設定房型的價格方案 | PricePlanID, RoomTypeID, Price, ValidFrom, ValidTo |
+| Promotion | 管理促銷活動與折扣 | PromotionID, DiscountType, DiscountValue, ValidFrom, ValidTo |
 
-| 類別 | 包含表格 | 設計理由 |
-|------|---------|---------|
-| 飯店基礎資料 | Hotel, HotelAmenity, HotelHasAmenity, HotelImage | 提供完整的飯店資訊展示，增強客戶預訂體驗 |
-| 房型與房間 | RoomType, RoomAmenity, RoomTypeHasAmenity, RoomTypeImage, Room | 細化房間管理，支持精確的可用性檢查和價格差異化 |
-| 價格與促銷 | PricePlan, Promotion | 實現靈活的定價策略和促銷活動，提高收益管理能力 |
+### 👤 客戶與訂單管理
 
-### 👥 客戶與訂單相關表格
+| 資料表名稱 | 主要功能 | 重要欄位 |
+|------------|----------|----------|
+| User | 管理所有使用者資訊 | UserID, Email, FirstName, LastName, UserType |
+| Booking | 記錄訂房主要資訊 | BookingID, UserID, CheckInDate, CheckOutDate, TotalAmount |
+| BookingDetail | 記錄訂房明細 | BookingDetailID, BookingID, RoomID, DateFrom, DateTo |
+| Payment | 追蹤付款記錄 | PaymentID, BookingID, Amount, PaymentMethod, PaymentStatus |
+| Invoice | 管理發票資訊 | InvoiceID, BookingID, InvoiceNumber, TotalAmount |
+| Review | 儲存客戶評價 | ReviewID, BookingID, Rating, Content, ReviewDate |
 
-| 類別 | 包含表格 | 設計理由 |
-|------|---------|---------|
-| 用戶資料 | User | 統一管理用戶資訊，支持不同角色（客戶、員工、管理員） |
-| 訂房流程 | Booking, BookingDetail | 分離訂單頭和訂單明細，支持多房間預訂和詳細的訂單追蹤 |
-| 財務處理 | Payment, Invoice | 追蹤支付過程和財務記錄，滿足會計需求 |
-| 客戶反饋 | Review | 收集和管理客戶評價，提供服務改進依據和新客戶參考 |
+### 👷 營運管理
 
-### 👷 運營與管理相關表格
+| 資料表名稱 | 主要功能 | 重要欄位 |
+|------------|----------|----------|
+| Staff | 管理飯店員工資訊 | StaffID, HotelID, Position, Department |
+| MaintenanceRecord | 追蹤房間維修記錄 | RecordID, RoomID, Issue, Status |
+| CleaningRecord | 記錄房間清潔情況 | RecordID, RoomID, CleaningDate, Status |
 
-| 類別 | 包含表格 | 設計理由 |
-|------|---------|---------|
-| 員工管理 | Staff | 管理飯店員工資訊，支持權限控制和工作分配 |
-| 房間狀態追蹤 | MaintenanceRecord, CleaningRecord | **為何在訂房系統中納入這些表格？** 這些表格直接影響房間可用性和客戶體驗：<br>- 維護記錄追蹤房間設施問題，避免將有問題的房間分配給客戶<br>- 清潔記錄確保房間在客人入住前已完成清潔，提高客戶滿意度<br>- 支持房間狀態的實時更新，減少預訂衝突和超額預訂問題 |
+## 💾 資料表詳細說明
 
-## 💾 核心資料表詳細說明與示例
+### 1. 飯店資訊表 (Hotel)
 
-### 1. 飯店表 (Hotel)
-- **主鍵**: HotelID
-- **主要屬性**: Name, Address, City, Country, Phone, StarRating, CheckinTime, CheckoutTime
-- **描述**: 儲存飯店的基本資訊，是整個系統的核心實體。
-- **示例資料**:
-  ```
-  HotelID: 1
-  Name: '陽光海灘度假飯店'
-  Address: '海濱路123號'
-  City: '墾丁'
-  Country: '台灣'
-  Phone: '0912345678'
-  StarRating: 4.5
-  CheckinTime: '15:00'
-  CheckoutTime: '11:00'
-  ```
+存放系統中所有飯店的基本資訊，是整個系統的核心實體。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| HotelID | INT | 主鍵，飯店唯一識別碼 |
+| Name | NVARCHAR(100) | 飯店名稱 |
+| Address | NVARCHAR(255) | 飯店地址 |
+| City | NVARCHAR(50) | 所在城市 |
+| Country | NVARCHAR(50) | 所在國家 |
+| Phone | NVARCHAR(20) | 聯絡電話 |
+| Email | NVARCHAR(100) | 電子郵件 |
+| StarRating | DECIMAL(2,1) | 星級評分 (1-5) |
+| CheckinTime | TIME | 入住時間，預設 15:00 |
+| CheckoutTime | TIME | 退房時間，預設 12:00 |
+| IsActive | BIT | 飯店是否營業中 |
+
+### 2. 飯店設施表 (HotelAmenity)
+
+記錄飯店可能提供的各種設施選項。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| AmenityID | INT | 主鍵，設施唯一識別碼 |
+| Name | NVARCHAR(100) | 設施名稱，如「游泳池」、「健身中心」 |
+| Description | NVARCHAR(255) | 設施描述 |
+| Icon | NVARCHAR(50) | 設施圖示名稱 |
+
+### 3. 飯店與設施關聯表 (HotelHasAmenity)
+
+建立飯店與設施之間的多對多關聯，記錄每個飯店擁有哪些設施。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| HotelID | INT | 外鍵，參考 Hotel 表 |
+| AmenityID | INT | 外鍵，參考 HotelAmenity 表 |
+
+### 4. 飯店圖片表 (HotelImage)
+
+存放飯店相關的所有圖片，包括外觀、大廳、設施等。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| ImageID | INT | 主鍵，圖片唯一識別碼 |
+| HotelID | INT | 外鍵，參考 Hotel 表 |
+| ImageURL | NVARCHAR(255) | 圖片的URL路徑 |
+| Caption | NVARCHAR(100) | 圖片說明文字 |
+| IsPrimary | BIT | 是否為主要圖片 |
+| DisplayOrder | INT | 顯示順序 |
 
 ### 5. 房型表 (RoomType)
-- **主鍵**: RoomTypeID
-- **外鍵**: HotelID 參考 Hotel
-- **主要屬性**: Name, Description, BasePrice, MaxOccupancy, BedConfiguration
-- **描述**: 定義飯店提供的不同房型及其基本屬性。
-- **示例資料**:
-  ```
-  RoomTypeID: 1
-  HotelID: 1
-  Name: '豪華海景雙人房'
-  Description: '寬敞的房間配有陽台，可欣賞迷人的海景'
-  BasePrice: 3500.00
-  BaseCurrency: 'TWD'
-  MaxOccupancy: 2
-  BedConfiguration: '1張特大床'
-  ```
+
+定義飯店提供的不同房型及其基本屬性。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| RoomTypeID | INT | 主鍵，房型唯一識別碼 |
+| HotelID | INT | 外鍵，參考 Hotel 表 |
+| Name | NVARCHAR(100) | 房型名稱，如「豪華單人房」 |
+| Description | NVARCHAR(MAX) | 房型詳細描述 |
+| BasePrice | DECIMAL(10,2) | 基本房價 |
+| BaseCurrency | NVARCHAR(3) | 貨幣單位，預設 TWD |
+| MaxOccupancy | INT | 最大可容納人數 |
+| BedConfiguration | NVARCHAR(100) | 床型配置描述 |
+| RoomSize | NVARCHAR(50) | 房間大小，如「25平方公尺」 |
+
+### 6. 房型設施表 (RoomAmenity)
+
+記錄房間可能配備的各種設施選項。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| AmenityID | INT | 主鍵，設施唯一識別碼 |
+| Name | NVARCHAR(100) | 設施名稱，如「電視」、「冰箱」 |
+| Description | NVARCHAR(255) | 設施描述 |
+| Icon | NVARCHAR(50) | 設施圖示名稱 |
+
+### 7. 房型與設施關聯表 (RoomTypeHasAmenity)
+
+建立房型與設施之間的多對多關聯，記錄每種房型配備哪些設施。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| RoomTypeID | INT | 外鍵，參考 RoomType 表 |
+| AmenityID | INT | 外鍵參考 RoomAmenity 表 |
+
+### 8. 房型圖片表 (RoomTypeImage)
+
+存放各種房型的相關圖片。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| ImageID | INT | 主鍵，圖片唯一識別碼 |
+| RoomTypeID | INT | 外鍵，參考 RoomType 表 |
+| ImageURL | NVARCHAR(255) | 圖片的URL路徑 |
+| Caption | NVARCHAR(100) | 圖片說明文字 |
+| IsPrimary | BIT | 是否為主要圖片 |
+| DisplayOrder | INT | 顯示順序 |
 
 ### 9. 客房表 (Room)
-- **主鍵**: RoomID
-- **外鍵**: HotelID 參考 Hotel, RoomTypeID 參考 RoomType
-- **主要屬性**: RoomNumber, Floor, Status
-- **描述**: 代表飯店的實際物理房間，包含房間號碼、樓層和狀態。
-- **示例資料**:
-  ```
-  RoomID: 101
-  HotelID: 1
-  RoomTypeID: 1
-  RoomNumber: '501'
-  Floor: '5'
-  Status: 'Available'
-  ```
+
+記錄飯店的實體房間資訊，每個房間都屬於特定房型。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| RoomID | INT | 主鍵，房間唯一識別碼 |
+| HotelID | INT | 外鍵，參考 Hotel 表 |
+| RoomTypeID | INT | 外鍵，參考 RoomType 表 |
+| RoomNumber | NVARCHAR(20) | 房間號碼 |
+| Floor | NVARCHAR(10) | 所在樓層 |
+| Status | NVARCHAR(20) | 房間狀態（Available, Occupied, Maintenance, Cleaning） |
+| Notes | NVARCHAR(255) | 備註說明 |
+
+### 10. 用戶表 (User)
+
+管理所有系統使用者，包括客戶、管理員和員工。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| UserID | INT | 主鍵，使用者唯一識別碼 |
+| Email | NVARCHAR(100) | 電子郵件，唯一值 |
+| PasswordHash | NVARCHAR(255) | 加密後的密碼 |
+| FirstName | NVARCHAR(50) | 名字 |
+| LastName | NVARCHAR(50) | 姓氏 |
+| Phone | NVARCHAR(20) | 聯絡電話 |
+| UserType | NVARCHAR(20) | 使用者類型（Customer, Admin, Staff） |
+| RegistrationDate | DATETIME | 註冊日期 |
+| IsVerified | BIT | 是否已驗證 |
+| IsActive | BIT | 帳號是否啟用 |
+
+### 11. 價格方案表 (PricePlan)
+
+設定不同房型在特定時間範圍內的價格策略。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| PricePlanID | INT | 主鍵，價格方案唯一識別碼 |
+| RoomTypeID | INT | 外鍵，參考 RoomType 表 |
+| Name | NVARCHAR(100) | 方案名稱，如「標準價」、「週末價」 |
+| ValidFrom | DATE | 有效期間開始日 |
+| ValidTo | DATE | 有效期間結束日 |
+| DayOfWeekBitmask | INT | 一週中的適用日（位元遮罩：1=週一, 2=週二...64=週日） |
+| Price | DECIMAL(10,2) | 房價 |
+| IsBreakfastIncluded | BIT | 是否含早餐 |
+| IsRefundable | BIT | 是否可退款 |
+| MinStayLength | INT | 最少住宿天數 |
+
+### 12. 促銷活動表 (Promotion)
+
+管理各種折扣和促銷活動。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| PromotionID | INT | 主鍵，促銷活動唯一識別碼 |
+| Name | NVARCHAR(100) | 促銷名稱，如「早鳥優惠」 |
+| DiscountType | NVARCHAR(20) | 折扣類型（Percentage, FixedAmount） |
+| DiscountValue | DECIMAL(10,2) | 折扣值 |
+| ValidFrom | DATETIME | 有效期間開始時間 |
+| ValidTo | DATETIME | 有效期間結束時間 |
+| PromotionCode | NVARCHAR(20) | 促銷代碼 |
+| MinimumStay | INT | 最少住宿天數要求 |
+| MaxUsageCount | INT | 最大使用次數限制 |
 
 ### 13. 預訂表 (Booking)
-- **主鍵**: BookingID
-- **外鍵**: UserID 參考 User, PromotionID 參考 Promotion
-- **主要屬性**: BookingReference, CheckInDate, CheckOutDate, AdultCount, TotalAmount, BookingStatus
-- **描述**: 儲存客戶的預訂資訊。
-- **示例資料**:
-  ```
-  BookingID: 1001
-  BookingReference: 'BK20231215001'
-  UserID: 501
-  BookingDate: '2023-12-01 14:30:00'
-  CheckInDate: '2023-12-15'
-  CheckOutDate: '2023-12-17'
-  AdultCount: 2
-  ChildCount: 0
-  TotalAmount: 7000.00
-  DiscountAmount: 700.00
-  FinalAmount: 6300.00
-  BookingStatus: 'Confirmed'
-  ```
+
+記錄客戶的訂房資訊，是訂房流程的核心資料表。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| BookingID | INT | 主鍵，預訂唯一識別碼 |
+| BookingReference | NVARCHAR(20) | 預訂參考編號，唯一值 |
+| UserID | INT | 外鍵，參考 User 表 |
+| BookingDate | DATETIME | 下訂日期時間 |
+| CheckInDate | DATE | 入住日期 |
+| CheckOutDate | DATE | 退房日期 |
+| AdultCount | INT | 成人人數 |
+| ChildCount | INT | 兒童人數 |
+| TotalAmount | DECIMAL(10,2) | 訂單總金額 |
+| DiscountAmount | DECIMAL(10,2) | 折扣金額 |
+| FinalAmount | DECIMAL(10,2) | 最終金額 |
+| BookingStatus | NVARCHAR(20) | 訂單狀態（Confirmed, Checked In, Cancelled 等） |
+| PromotionID | INT | 外鍵，參考 Promotion 表 |
+| PaymentStatus | NVARCHAR(20) | 付款狀態（Pending, Paid, Refunded 等） |
 
 ### 14. 預訂明細表 (BookingDetail)
-- **主鍵**: BookingDetailID
-- **外鍵**: BookingID 參考 Booking, RoomID 參考 Room, RoomTypeID 參考 RoomType
-- **主要屬性**: DateFrom, DateTo, DailyRate, TotalAmount, GuestName
-- **描述**: 儲存預訂中的每個房間的詳細資訊。
-- **示例資料**:
-  ```
-  BookingDetailID: 2001
-  BookingID: 1001
-  RoomID: 101
-  RoomTypeID: 1
-  DateFrom: '2023-12-15'
-  DateTo: '2023-12-17'
-  DailyRate: 3500.00
-  TotalAmount: 7000.00
-  GuestFirstName: '志明'
-  GuestLastName: '陳'
-  Status: 'Confirmed'
-  ```
+
+記錄每筆預訂中的房間明細資訊。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| BookingDetailID | INT | 主鍵，明細唯一識別碼 |
+| BookingID | INT | 外鍵，參考 Booking 表 |
+| RoomID | INT | 外鍵，參考 Room 表 |
+| RoomTypeID | INT | 外鍵，參考 RoomType 表 |
+| DateFrom | DATE | 此房間入住日期 |
+| DateTo | DATE | 此房間退房日期 |
+| DailyRate | DECIMAL(10,2) | 每日房價 |
+| TotalAmount | DECIMAL(10,2) | 此房間總金額 |
+| GuestFirstName | NVARCHAR(50) | 入住客人名字 |
+| GuestLastName | NVARCHAR(50) | 入住客人姓氏 |
+| Status | NVARCHAR(20) | 狀態（Confirmed, Cancelled） |
+
+### 15. 付款表 (Payment)
+
+追蹤與預訂相關的所有付款記錄。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| PaymentID | INT | 主鍵，付款唯一識別碼 |
+| BookingID | INT | 外鍵，參考 Booking 表 |
+| Amount | DECIMAL(10,2) | 付款金額 |
+| PaymentDate | DATETIME | 付款日期時間 |
+| PaymentMethod | NVARCHAR(50) | 付款方式（CreditCard, BankTransfer 等） |
+| PaymentStatus | NVARCHAR(20) | 付款狀態（Completed, Failed 等） |
+| TransactionID | NVARCHAR(100) | 交易編號 |
+| CardType | NVARCHAR(50) | 信用卡類型 |
+| Last4Digits | NVARCHAR(4) | 信用卡末四碼 |
+
+### 16. 發票表 (Invoice)
+
+管理與預訂相關的發票資訊。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| InvoiceID | INT | 主鍵，發票唯一識別碼 |
+| BookingID | INT | 外鍵，參考 Booking 表 |
+| InvoiceNumber | NVARCHAR(50) | 發票號碼，唯一值 |
+| InvoiceDate | DATETIME | 開立日期時間 |
+| Amount | DECIMAL(10,2) | 金額 |
+| TaxAmount | DECIMAL(10,2) | 稅額 |
+| TotalAmount | DECIMAL(10,2) | 總金額 |
+| Status | NVARCHAR(20) | 發票狀態（Issued, Paid, Cancelled） |
+| BillingName | NVARCHAR(100) | 帳單抬頭 |
+
+### 17. 評價表 (Review)
+
+儲存客戶對住宿體驗的評價。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| ReviewID | INT | 主鍵，評價唯一識別碼 |
+| BookingID | INT | 外鍵，參考 Booking 表 |
+| UserID | INT | 外鍵，參考 User 表 |
+| HotelID | INT | 外鍵，參考 Hotel 表 |
+| Rating | DECIMAL(3,1) | 整體評分（1-5） |
+| Title | NVARCHAR(100) | 評價標題 |
+| Content | NVARCHAR(MAX) | 評價內容 |
+| ReviewDate | DATETIME | 評價日期時間 |
+| CleanlinessRating | DECIMAL(3,1) | 清潔度評分 |
+| ServiceRating | DECIMAL(3,1) | 服務評分 |
+| LocationRating | DECIMAL(3,1) | 位置評分 |
+| ValueRating | DECIMAL(3,1) | 性價比評分 |
+| IsVerified | BIT | 是否已驗證（確認真實住客） |
+| IsPublished | BIT | 是否已發布公開 |
 
 ### 18. 員工表 (Staff)
-- **主鍵**: StaffID
-- **外鍵**: UserID 參考 User, HotelID 參考 Hotel
-- **主要屬性**: FirstName, LastName, Position, Department, HireDate
-- **描述**: 儲存飯店員工的資訊。
-- **為何需要此表格**: 支援系統後端管理，包括處理訂房、客房服務和問題解決。員工是連接系統和實際服務的關鍵。
-- **示例資料**:
-  ```
-  StaffID: 101
-  UserID: 701
-  HotelID: 1
-  FirstName: '美玲'
-  LastName: '林'
-  Position: '前台經理'
-  Department: '客戶服務'
-  HireDate: '2022-03-15'
-  ```
+
+管理飯店的員工資訊。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| StaffID | INT | 主鍵，員工唯一識別碼 |
+| UserID | INT | 外鍵，參考 User 表 |
+| HotelID | INT | 外鍵，參考 Hotel 表 |
+| FirstName | NVARCHAR(50) | 名字 |
+| LastName | NVARCHAR(50) | 姓氏 |
+| Position | NVARCHAR(50) | 職位 |
+| Department | NVARCHAR(50) | 部門 |
+| HireDate | DATE | 入職日期 |
+| Email | NVARCHAR(100) | 電子郵件，唯一值 |
+| IsActive | BIT | 是否在職 |
 
 ### 19. 維護記錄表 (MaintenanceRecord)
-- **主鍵**: RecordID
-- **外鍵**: RoomID 參考 Room, ReportedByStaffID 參考 Staff
-- **主要屬性**: ReportDate, Issue, Priority, Status
-- **描述**: 追蹤房間的維護記錄。
-- **為何需要此表格**: 
-  - 確保房間設施正常運作，提升客戶滿意度
-  - 影響訂房系統中房間的可用性狀態
-  - 預防將有問題的房間分配給客戶
-- **示例資料**:
-  ```
-  RecordID: 501
-  RoomID: 101
-  ReportedByStaffID: 102
-  ReportDate: '2023-11-30 09:15:00'
-  Issue: '空調系統噪音過大'
-  Priority: 'High'
-  Status: 'In Progress'
-  ```
+
+追蹤客房的維修問題與處理狀況。
+
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| RecordID | INT | 主鍵，記錄唯一識別碼 |
+| RoomID | INT | 外鍵，參考 Room 表 |
+| ReportedByStaffID | INT | 外鍵，參考 Staff 表，回報人員 |
+| ReportDate | DATETIME | 回報日期時間 |
+| Issue | NVARCHAR(255) | 問題描述 |
+| Priority | NVARCHAR(20) | 優先程度（Low, Medium, High, Urgent） |
+| Status | NVARCHAR(20) | 處理狀態（Reported, In Progress, Completed） |
+| AssignedToStaffID | INT | 外鍵，參考 Staff 表，負責處理的員工 |
+| CompletionDate | DATETIME | 完成日期時間 |
 
 ### 20. 清潔記錄表 (CleaningRecord)
-- **主鍵**: RecordID
-- **外鍵**: RoomID 參考 Room, CleanedByStaffID 參考 Staff
-- **主要屬性**: CleaningDate, Status, VerificationDate
-- **描述**: 追蹤房間的清潔記錄。
-- **為何需要此表格**:
-  - 確保房間在客人入住前已完成清潔與消毒
-  - 協調清潔工作的排程，優先處理即將入住的房間
-  - 實時更新房間狀態，提高運營效率
-- **示例資料**:
-  ```
-  RecordID: 601
-  RoomID: 101
-  CleanedByStaffID: 103
-  CleaningDate: '2023-12-10 11:30:00'
-  Status: 'Completed'
-  VerifiedByStaffID: 101
-  VerificationDate: '2023-12-10 12:15:00'
-  ```
 
-## 🔄 實體關係與基數關係
+記錄客房的清潔工作。
 
-1. **飯店 (1) ↔ 房型 (N)**: 一個飯店可以有多種房型，但每種房型只屬於一個飯店
-2. **飯店 (1) ↔ 客房 (N)**: 一個飯店有多個客房，但每個客房只屬於一個飯店
-3. **房型 (1) ↔ 客房 (N)**: 一種房型可以有多個客房，但每個客房只屬於一種房型
-4. **飯店 (M) ↔ 飯店設施 (N)**: 多對多關係，一個飯店可提供多種設施，一種設施可以出現在多個飯店中
-5. **房型 (M) ↔ 房型設施 (N)**: 多對多關係，一種房型可提供多種設施，一種設施可以出現在多種房型中
-6. **用戶 (1) ↔ 預訂 (N)**: 一個用戶可以有多筆預訂，但每筆預訂只對應一個用戶
-7. **預訂 (1) ↔ 預訂明細 (N)**: 一筆預訂可以包含多筆預訂明細，但每筆預訂明細只對應一筆預訂
-8. **客房 (1) ↔ 預訂明細 (N)**: 一個客房可以有多筆預訂明細，但每筆預訂明細只對應一個客房
-9. **預訂 (1) ↔ 付款 (N)**: 一筆預訂可以有多筆付款，但每筆付款只對應一筆預訂
-10. **預訂 (1) ↔ 評價 (1)**: 一筆預訂最多有一筆評價，每筆評價對應一筆預訂
-11. **飯店 (1) ↔ 員工 (N)**: 一個飯店有多名員工，但每名員工只屬於一個飯店
-12. **客房 (1) ↔ 維護記錄 (N)**: 一個客房可以有多筆維護記錄，但每筆維護記錄只對應一個客房
-13. **客房 (1) ↔ 清潔記錄 (N)**: 一個客房可以有多筆清潔記錄，但每筆清潔記錄只對應一個客房
+| 欄位名稱 | 資料類型 | 說明 |
+|----------|----------|------|
+| RecordID | INT | 主鍵，記錄唯一識別碼 |
+| RoomID | INT | 外鍵，參考 Room 表 |
+| CleanedByStaffID | INT | 外鍵，參考 Staff 表，清潔人員 |
+| CleaningDate | DATETIME | 清潔日期時間 |
+| Status | NVARCHAR(20) | 狀態（Scheduled, Completed, Verified） |
+| VerifiedByStaffID | INT | 外鍵，參考 Staff 表，驗證人員 |
+| VerificationDate | DATETIME | 驗證日期時間 |
 
-## 📝 資料庫範式
+## 🔄 資料表關聯圖
 
-此資料庫設計符合**第三範式 (3NF)** 標準，確保：
-1. 所有表格都有明確的主鍵
-2. 所有非鍵屬性都完全依賴於主鍵
-3. 所有非鍵屬性都只依賴於主鍵，而非依賴於其他非鍵屬性
-4. 透過外鍵關聯建立表格之間的關係，避免資料冗餘
+各資料表之間通過外鍵建立關聯，主要關聯包括：
 
-## 🔄 核心業務流程
+- 飯店與其房型、房間、圖片、設施的一對多關聯
+- 房型與其房間、圖片、設施的一對多關聯
+- 用戶與預訂的一對多關聯
+- 預訂與預訂明細、付款、發票的一對多關聯
+- 房間與維護記錄、清潔記錄的一對多關聯
 
-### 預訂流程
-1. 用戶瀏覽飯店和房型
-2. 選擇入住和退房日期
-3. 系統檢查所選日期和房型的可用性
-4. 用戶提供個人資訊並確認預訂
-5. 系統處理付款
-6. 生成預訂編號和確認信
-7. 記錄相關資訊到預訂和預訂明細表
+## 🚀 系統功能
 
-### 房間狀態管理流程
-1. 客人退房後，房間狀態更新為「需清潔」
-2. 清潔人員接收清潔任務
-3. 完成清潔後，更新清潔記錄
-4. 主管驗證清潔質量
-5. 房間狀態更新為「可入住」
-6. 若發現設施問題，創建維護記錄
-7. 維護完成後，房間恢復「可入住」狀態
+此資料庫設計支援以下主要功能：
 
-## 💡 系統優勢與特色
-
-1. **整合性**: 前端訂房和後端管理緊密結合，資訊即時同步
-2. **彈性**: 支持多種價格策略和促銷方式
-3. **完整性**: 涵蓋從預訂到入住、退房的完整流程
-4. **可追溯性**: 詳細記錄每個房間的預訂、清潔和維護歷史
-5. **客戶體驗**: 通過房間狀態的準確管理，提供更可靠的預訂體驗
-
-## 🚀 未來擴展方向
-
-1. 會員積分和等級系統
-2. 與第三方訂房平台整合
-3. 自動化客房分配算法
-4. 房間庫存預測和動態定價
-5. 客戶行為分析和個人化推薦
+1. **飯店與房型管理**：完整記錄飯店及其提供的房型資訊
+2. **房間可用性查詢**：根據日期和房型查詢可用房間
+3. **彈性定價策略**：支援不同時段、不同條件的價格方案
+4. **線上預訂流程**：從查詢、預訂到支付的完整流程
+5. **客房狀態管理**：追蹤房間的清潔和維護狀態
+6. **客戶評價系統**：收集和管理客戶對住宿體驗的評價
+7. **多層級用戶管理**：區分客戶、員工和管理員權限
 
 ---
 
-這個資料庫設計可以支持一個完整功能的飯店訂房網站，包括線上預訂、管理預訂、處理付款和發票、管理評價和客房維護，為用戶提供流暢的預訂體驗，同時為飯店管理者提供有效的營運管理工具。 
+此資料庫設計旨在提供全方位的飯店訂房管理解決方案，從前台訂房到後台管理，提供流暢的使用者體驗和高效的營運支援。 
